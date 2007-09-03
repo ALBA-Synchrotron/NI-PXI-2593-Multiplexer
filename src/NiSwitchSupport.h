@@ -8,6 +8,7 @@
 //
 // = AUTHORS
 //    N.Leclercq
+//    R.Sune
 //
 // ============================================================================
 
@@ -19,6 +20,7 @@
 // ============================================================================
 #include <NIDAQmx.h>
 #include <tango.h>
+#include <omnithread.h>
 
 //=============================================================================
 // TYPEDEFs
@@ -27,6 +29,29 @@ typedef std::map<std::string, unsigned short> Signals;
 typedef Signals::iterator SignalsIterator;
 typedef Signals::const_iterator SignalsConstIterator;
 
+
+struct TopologyInfo 
+{
+	unsigned short chan_min;
+	unsigned short chan_max;
+	// Offset between real channels
+	unsigned short chan_offset;
+	// Common output port name (com0 or com1)
+	const char* comName;
+	
+	// Real channel is the number the NI API wants, and the virtual
+	// channel is the number the device offers.
+	// Virtual numbers are all consecutive, while virtual ones correspond
+	// directly to the ones written in the front panel
+	inline unsigned short get_real_channel_id(unsigned short vch) const;
+	inline unsigned short get_virtual_channel_id(unsigned short rch) const;
+	inline bool check_real_channel_id(unsigned short chan_id) const;
+	inline unsigned short begin() const;
+	inline unsigned short end() const;
+	inline void next(unsigned short & val) const;
+};
+		
+		
 // ============================================================================
 //! The multiplexer class.
 // ============================================================================
@@ -42,6 +67,8 @@ public:
     mux_topology_unknown,     //- uninitialized mux  
     mux_topology_dual_8x1,    //- 2 multiplexers of 8 channels 
     mux_topology_single_16x1, //- 1 multiplexer of 16 channels 
+	mux_topology_dual_4x1_terminated, //- 2 terminated multiplexer of 4 channels 
+	mux_topology_single_8x1_terminated, //- 1 terminated multiplexer of 8 channels 
   } MuxTopology;
 
 
@@ -161,7 +188,9 @@ public:
 
 private:
   //- mux topology 
-  static bool mux_available[2];
+ static bool mux_available[2];
+//   static std::map<std::string, bool[2]> mux_available_map;
+  static omni_mutex mux_available_mutex;
 
   //- mux channels
   static const char * mux_channels[16];
@@ -173,6 +202,10 @@ private:
 
   //- mux topology 
   MuxTopology topology_;
+  
+  //- more information about the selected topology
+  TopologyInfo topology_info_;
+  void define_topology_info();
 
   //- mux id
   MuxId id_;

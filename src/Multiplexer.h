@@ -11,8 +11,13 @@
 // $Revision$
 //
 // $Log$
-// Revision 1.1  2007/08/31 14:15:24  rsune
-// Initial revision
+// Revision 1.2  2007/09/03 11:01:51  rsune
+// Added support for terminated modes
+// Added a mutex to the static members
+// TODO: Now only one multiplexer (with up to two tango devices) can be used with one server
+//
+// Revision 1.1.1.1  2007/08/31 14:15:24  rsune
+// Minor changes over original Soleil device
 //
 // Revision 1.2  2005/07/05 12:29:21  leclercq
 // Fixed dtor problem
@@ -57,8 +62,8 @@ namespace Multiplexer_ns
 
 /*
  *	Device States Description:
- *	Tango::FAULT :	Hardware failure [unable to control the hardware]
- *	Tango::RUNNING :	Device is up and ready
+*  Tango::FAULT :    Hardware failure [unable to control the hardware]
+*  Tango::RUNNING :  Device is up and ready
  */
 
 
@@ -93,7 +98,7 @@ public :
  */
 	string	niDAQmxDeviceName;
 /**
- *	The multiplexer topology: 8x1 or 16x1
+ *	The multiplexer topology: "8x1", "16x1", "4x1 terminated", "8x1 terminated"
  */
 	string	topology;
 /**
@@ -112,14 +117,14 @@ public :
  *	@param cl	Class.
  *	@param s 	Device Name
  */
-	Multiplexer(Tango::DeviceClass *,string &);
+	Multiplexer(Tango::DeviceClass *cl,string &s);
 /**
  * Constructs a newly allocated Command object.
  *
  *	@param cl	Class.
  *	@param s 	Device Name
  */
-	Multiplexer(Tango::DeviceClass *,const char *);
+	Multiplexer(Tango::DeviceClass *cl,const char *s);
 /**
  * Constructs a newly allocated Command object.
  *
@@ -127,7 +132,7 @@ public :
  *	@param s 	Device name
  *	@param d	Device description.
  */
-	Multiplexer(Tango::DeviceClass *,const char *,const char *);
+	Multiplexer(Tango::DeviceClass *cl,const char *s,const char *d);
 //@}
 
 /**@name Destructor
@@ -162,6 +167,26 @@ public :
  */
 
 //@{
+/**
+ *	Execution allowed for SelectByName command.
+ */
+	virtual bool is_SelectByName_allowed(const CORBA::Any &any);
+/**
+ *	Execution allowed for SelectByChannel command.
+ */
+	virtual bool is_SelectByChannel_allowed(const CORBA::Any &any);
+/**
+ *	Execution allowed for GetSignalsMapping command.
+ */
+	virtual bool is_GetSignalsMapping_allowed(const CORBA::Any &any);
+/**
+ *	Execution allowed for GetSelectionByName command.
+ */
+	virtual bool is_GetSelectionByName_allowed(const CORBA::Any &any);
+/**
+ *	Execution allowed for GetSelectionByChannel command.
+ */
+	virtual bool is_GetSelectionByChannel_allowed(const CORBA::Any &any);
 /**
  * Connect the specified signal to the mux output
  *	@param	argin	The name of the signal to select

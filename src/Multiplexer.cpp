@@ -16,8 +16,13 @@ static const char *RcsId = "$Header$";
 // $Revision$
 //
 // $Log$
-// Revision 1.1  2007/08/31 14:15:24  rsune
-// Initial revision
+// Revision 1.2  2007/09/03 11:01:51  rsune
+// Added support for terminated modes
+// Added a mutex to the static members
+// TODO: Now only one multiplexer (with up to two tango devices) can be used with one server
+//
+// Revision 1.1.1.1  2007/08/31 14:15:24  rsune
+// Minor changes over original Soleil device
 //
 // Revision 1.1.1.1  2004/11/08 14:14:19  root
 // initial import
@@ -38,29 +43,32 @@ static const char *RcsId = "$Header$";
 
 //===================================================================
 //
-//	The folowing table gives the correspondance
+//	The following table gives the correspondance
 //	between commands and method's name.
 //
-//	Command's name	|	Method's name
+//  Command's name         |  Method's name
 //	----------------------------------------
-//	State	|	dev_state()
-//	Status	|	dev_status()
-//	SelectByName	|	select_by_name()
-//	SelectByChannel	|	select_by_channel()
-//	GetSignalsMapping	|	get_signals_mapping()
-//	GetSelectionByName	|	get_selection_by_name()
-//	GetSelectionByChannel	|	get_selection_by_channel()
+//  State                  |  dev_state()
+//  Status                 |  dev_status()
+//  SelectByName           |  select_by_name()
+//  SelectByChannel        |  select_by_channel()
+//  GetSignalsMapping      |  get_signals_mapping()
+//  GetSelectionByName     |  get_selection_by_name()
+//  GetSelectionByChannel  |  get_selection_by_channel()
 //
 //===================================================================
 
 #include <NiSwitchSupport.h>
 #include <Multiplexer.h>
+#include <MultiplexerClass.h>
 
 //----------------------------------------------------------------------------
 // DEFINEs
 //----------------------------------------------------------------------------
 #define k08x1_TOPOLOGY_STR (const char*)"8x1"
 #define k16x1_TOPOLOGY_STR (const char*)"16x1"
+#define k04x1_terminated_TOPOLOGY_STR (const char*)"4x1 terminated"
+#define k08x1_terminated_TOPOLOGY_STR (const char*)"8x1 terminated"
 #define kMAGIC_CHANNEL     0xFFFF
 
 // ============================================================================
@@ -178,10 +186,26 @@ void Multiplexer::init_device()
   Mux::MuxTopology mux_topology = Mux::mux_topology_dual_8x1;
   std::string tmp = topology;
   std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-  if (tmp == k16x1_TOPOLOGY_STR)
+  if (tmp == k08x1_TOPOLOGY_STR) {
+	  mux_topology = Mux::mux_topology_dual_8x1;
+  } else if (tmp == k16x1_TOPOLOGY_STR)
   {
     mux_topology = Mux::mux_topology_single_16x1;
+  } else if (tmp == k04x1_terminated_TOPOLOGY_STR)
+  {
+	  mux_topology = Mux::mux_topology_dual_4x1_terminated;
+  } else if (tmp == k08x1_terminated_TOPOLOGY_STR)
+  {
+	  mux_topology = Mux::mux_topology_single_8x1_terminated;
+  } else {
+	  ERROR_STREAM << "Device property <Topology> is invalid [should be \"8x1\", \"16x1\", \"4x1 terminated\" or \"8x1 terminated\"]" << std::endl;
+	  this->set_status("Device property <Topology> is invalid [should be \"8x1\", \"16x1\", \"4x1 terminated\" or \"8x1 terminated\"]");
+	  this->set_state(Tango::FAULT);
+	  return;
   }
+  
+
+  
   if (muxId == 1)
   {
     mux_id = Mux::mux_com1;
@@ -254,19 +278,57 @@ void Multiplexer::get_device_property()
 
 	//	Read device properties from database.(Automatic code generation)
 	//-------------------------------------------------------------
-	Tango::DbData	data;
-	data.push_back(Tango::DbDatum("Signals"));
-	data.push_back(Tango::DbDatum("NiDAQmxDeviceName"));
-	data.push_back(Tango::DbDatum("Topology"));
-	data.push_back(Tango::DbDatum("MuxId"));
+	Tango::DbData	dev_prop;
+	dev_prop.push_back(Tango::DbDatum("Signals"));
+	dev_prop.push_back(Tango::DbDatum("NiDAQmxDeviceName"));
+	dev_prop.push_back(Tango::DbDatum("Topology"));
+	dev_prop.push_back(Tango::DbDatum("MuxId"));
 
 	//	Call database and extract values
 	//--------------------------------------------
-	get_db_device()->get_property(data);
-	if (data[0].is_empty()==false)	data[0]  >>  signals;
-	if (data[1].is_empty()==false)	data[1]  >>  niDAQmxDeviceName;
-	if (data[2].is_empty()==false)	data[2]  >>  topology;
-	if (data[3].is_empty()==false)	data[3]  >>  muxId;
+	if (Tango::Util::instance()->_UseDb==true)
+		get_db_device()->get_property(dev_prop);
+	Tango::DbDatum	def_prop, cl_prop;
+	MultiplexerClass	*ds_class =
+		(static_cast<MultiplexerClass *>(get_device_class()));
+	int	i = -1;
+
+	//	Try to initialize Signals from class property
+	cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+	if (cl_prop.is_empty()==false)	cl_prop  >>  signals;
+	//	Try to initialize Signals from default device value
+	def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+	if (def_prop.is_empty()==false)	def_prop  >>  signals;
+	//	And try to extract Signals value from database
+	if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  signals;
+
+	//	Try to initialize NiDAQmxDeviceName from class property
+	cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+	if (cl_prop.is_empty()==false)	cl_prop  >>  niDAQmxDeviceName;
+	//	Try to initialize NiDAQmxDeviceName from default device value
+	def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+	if (def_prop.is_empty()==false)	def_prop  >>  niDAQmxDeviceName;
+	//	And try to extract NiDAQmxDeviceName value from database
+	if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  niDAQmxDeviceName;
+
+	//	Try to initialize Topology from class property
+	cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+	if (cl_prop.is_empty()==false)	cl_prop  >>  topology;
+	//	Try to initialize Topology from default device value
+	def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+	if (def_prop.is_empty()==false)	def_prop  >>  topology;
+	//	And try to extract Topology value from database
+	if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  topology;
+
+	//	Try to initialize MuxId from class property
+	cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+	if (cl_prop.is_empty()==false)	cl_prop  >>  muxId;
+	//	Try to initialize MuxId from default device value
+	def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+	if (def_prop.is_empty()==false)	def_prop  >>  muxId;
+	//	And try to extract MuxId value from database
+	if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  muxId;
+
 
 
 	//	End of Automatic code generation
@@ -274,13 +336,13 @@ void Multiplexer::get_device_property()
 
   critical_properties_missing_ = false;
 
-  if (data[1].is_empty())
+  if (!this->niDAQmxDeviceName.size()) //data[1].is_empty()
   {
     ERROR_STREAM << "Required device property <NiDAQmxDeviceName> is missing" << std::endl;
     critical_properties_missing_ = true;
   }
 
-  if (data[2].is_empty())
+  if (!this->topology.size()) //data[2].is_empty()
   {
     ERROR_STREAM << "Required device property <Topology> is missing" << std::endl;
     critical_properties_missing_ = true;
@@ -294,7 +356,7 @@ void Multiplexer::get_device_property()
                << niDAQmxDeviceName
                << endl;
 
-  if (data[1].is_empty() == false || signals.size() == 0)
+  if (this->niDAQmxDeviceName.size() || signals.size() == 0) // data[1].is_empty() == false
   {
     for (unsigned long i = 0; i < signals.size(); i++)
     {
@@ -318,29 +380,36 @@ void Multiplexer::get_device_property()
                << topology 
                << std::endl;
 
-  //- be sure Topology is valid
-  std::string tmp = topology;
-  std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-  if (tmp != k08x1_TOPOLOGY_STR && tmp != k16x1_TOPOLOGY_STR)
+//   //- be sure Topology is valid
+//   std::string tmp = topology;
+//   std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+//   if (tmp != k08x1_TOPOLOGY_STR && tmp != k16x1_TOPOLOGY_STR)
+//   {
+//     ERROR_STREAM << "Device property <Topology> is invalid [should be \"8x1\", \"16x1\", \"4x1 terminated\" or \"8x1 terminated\"]" << std::endl;
+//     critical_properties_missing_ = true;
+//   }
+// 
+//   //- be sure MuxId is specified and valid
+//   if (tmp == k08x1_TOPOLOGY_STR || tmp == k04x1_terminated_TOPOLOGY_STR)
+//   {
+// // 	if (data[3].is_empty()) 
+// //     {
+// //       ERROR_STREAM << "Required device property <MuxId> is missing" << endl;
+// //       critical_properties_missing_ = true;
+// //     }
+// //     else
+// 	if (muxId != 0 && muxId != 1)
+//     {
+//       ERROR_STREAM << "Device property <MuxId> is invalid [should be 0 or 1]" << std::endl;
+//       critical_properties_missing_ = true;
+//     }
+//   }
+  if (muxId != 0 && muxId != 1)
   {
-    ERROR_STREAM << "Device property <Topology> is invalid [should be 8x1 or 16x1]" << std::endl;
-    critical_properties_missing_ = true;
+	  ERROR_STREAM << "Device property <MuxId> is invalid [should be 0 or 1]" << std::endl;
+	  critical_properties_missing_ = true;
   }
-
-  //- be sure MuxId is specified and valid
-  if (tmp == k08x1_TOPOLOGY_STR)
-  {
-    if (data[3].is_empty()) 
-    {
-      ERROR_STREAM << "Required device property <MuxId> is missing" << endl;
-      critical_properties_missing_ = true;
-    }
-    else if (muxId != 0 && muxId != 1)
-    {
-      ERROR_STREAM << "Device property <MuxId> is invalid [should be 0 or 1]" << std::endl;
-      critical_properties_missing_ = true;
-    }
-  }
+	  
 
   DEBUG_STREAM << "dev-property::MuxId::"
                << muxId

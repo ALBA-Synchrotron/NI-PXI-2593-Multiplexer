@@ -23,8 +23,13 @@ static const char *RCSfile = "$RCSfile$";
 // $Revision$
 //
 // $Log$
-// Revision 1.1  2007/08/31 14:15:24  rsune
-// Initial revision
+// Revision 1.2  2007/09/03 11:01:51  rsune
+// Added support for terminated modes
+// Added a mutex to the static members
+// TODO: Now only one multiplexer (with up to two tango devices) can be used with one server
+//
+// Revision 1.1.1.1  2007/08/31 14:15:24  rsune
+// Minor changes over original Soleil device
 //
 // Revision 1.1.1.1  2004/11/08 14:14:19  root
 // initial import
@@ -53,66 +58,6 @@ namespace Multiplexer_ns
 {
 //+----------------------------------------------------------------------------
 //
-// method : 		GetSelectionByChannelCmd::GetSelectionByChannelCmd()
-// 
-// description : 	constructor for the command of the Multiplexer.
-//
-// In : - name : The command name
-//		- in : The input parameter type
-//		- out : The output parameter type
-//		- in_desc : The input parameter description
-//		- out_desc : The output parameter description
-//
-//-----------------------------------------------------------------------------
-GetSelectionByChannelCmd::GetSelectionByChannelCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out,
-								const char		*in_desc,
-				       			const char		*out_desc,
-								Tango::DispLevel level)
-:Command(name,in,out,in_desc,out_desc, level)
-{
-}
-//
-//	Constructor without in/out parameters description
-//
-GetSelectionByChannelCmd::GetSelectionByChannelCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out)
-:Command(name,in,out)
-{
-}
-
-
-
-
-//+----------------------------------------------------------------------------
-//
-// method : 		GetSelectionByChannelCmd::is_allowed()
-// 
-// description : 	method to test whether command is allowed or not in this
-//			state. In this case, the command is allowed only if
-//			the device is in ON state
-//
-// in : - device : The device on which the command must be excuted
-//		- in_any : The command input data
-//
-// returns :	boolean - true == is allowed , false == not allowed
-//
-//-----------------------------------------------------------------------------
-bool GetSelectionByChannelCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::Any &in_any)
-{
-		//	End of Generated Code
-
-		//	Re-Start of Generated Code
-		return true;
-}
-
-
-
-
-//+----------------------------------------------------------------------------
-//
 // method : 		GetSelectionByChannelCmd::execute()
 // 
 // description : 	method to trigger the execution of the command.
@@ -127,70 +72,10 @@ bool GetSelectionByChannelCmd::is_allowed(Tango::DeviceImpl *device, const CORBA
 CORBA::Any *GetSelectionByChannelCmd::execute(Tango::DeviceImpl *device,const CORBA::Any &in_any)
 {
 
-	cout2 << "DevTemplateCmd::execute(): arrived" << endl;
+	cout2 << "GetSelectionByChannelCmd::execute(): arrived" << endl;
 
 	return insert((static_cast<Multiplexer *>(device))->get_selection_by_channel());
 }
-
-//+----------------------------------------------------------------------------
-//
-// method : 		GetSelectionByNameCmd::GetSelectionByNameCmd()
-// 
-// description : 	constructor for the command of the Multiplexer.
-//
-// In : - name : The command name
-//		- in : The input parameter type
-//		- out : The output parameter type
-//		- in_desc : The input parameter description
-//		- out_desc : The output parameter description
-//
-//-----------------------------------------------------------------------------
-GetSelectionByNameCmd::GetSelectionByNameCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out,
-								const char		*in_desc,
-				       			const char		*out_desc,
-								Tango::DispLevel level)
-:Command(name,in,out,in_desc,out_desc, level)
-{
-}
-//
-//	Constructor without in/out parameters description
-//
-GetSelectionByNameCmd::GetSelectionByNameCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out)
-:Command(name,in,out)
-{
-}
-
-
-
-
-//+----------------------------------------------------------------------------
-//
-// method : 		GetSelectionByNameCmd::is_allowed()
-// 
-// description : 	method to test whether command is allowed or not in this
-//			state. In this case, the command is allowed only if
-//			the device is in ON state
-//
-// in : - device : The device on which the command must be excuted
-//		- in_any : The command input data
-//
-// returns :	boolean - true == is allowed , false == not allowed
-//
-//-----------------------------------------------------------------------------
-bool GetSelectionByNameCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::Any &in_any)
-{
-		//	End of Generated Code
-
-		//	Re-Start of Generated Code
-		return true;
-}
-
-
-
 
 //+----------------------------------------------------------------------------
 //
@@ -208,70 +93,10 @@ bool GetSelectionByNameCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::A
 CORBA::Any *GetSelectionByNameCmd::execute(Tango::DeviceImpl *device,const CORBA::Any &in_any)
 {
 
-	cout2 << "DevTemplateCmd::execute(): arrived" << endl;
+	cout2 << "GetSelectionByNameCmd::execute(): arrived" << endl;
 
 	return insert((static_cast<Multiplexer *>(device))->get_selection_by_name());
 }
-
-//+----------------------------------------------------------------------------
-//
-// method : 		GetSignalsMappingCmd::GetSignalsMappingCmd()
-// 
-// description : 	constructor for the command of the Multiplexer.
-//
-// In : - name : The command name
-//		- in : The input parameter type
-//		- out : The output parameter type
-//		- in_desc : The input parameter description
-//		- out_desc : The output parameter description
-//
-//-----------------------------------------------------------------------------
-GetSignalsMappingCmd::GetSignalsMappingCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out,
-								const char		*in_desc,
-				       			const char		*out_desc,
-								Tango::DispLevel level)
-:Command(name,in,out,in_desc,out_desc, level)
-{
-}
-//
-//	Constructor without in/out parameters description
-//
-GetSignalsMappingCmd::GetSignalsMappingCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out)
-:Command(name,in,out)
-{
-}
-
-
-
-
-//+----------------------------------------------------------------------------
-//
-// method : 		GetSignalsMappingCmd::is_allowed()
-// 
-// description : 	method to test whether command is allowed or not in this
-//			state. In this case, the command is allowed only if
-//			the device is in ON state
-//
-// in : - device : The device on which the command must be excuted
-//		- in_any : The command input data
-//
-// returns :	boolean - true == is allowed , false == not allowed
-//
-//-----------------------------------------------------------------------------
-bool GetSignalsMappingCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::Any &in_any)
-{
-		//	End of Generated Code
-
-		//	Re-Start of Generated Code
-		return true;
-}
-
-
-
 
 //+----------------------------------------------------------------------------
 //
@@ -289,70 +114,10 @@ bool GetSignalsMappingCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::An
 CORBA::Any *GetSignalsMappingCmd::execute(Tango::DeviceImpl *device,const CORBA::Any &in_any)
 {
 
-	cout2 << "DevTemplateCmd::execute(): arrived" << endl;
+	cout2 << "GetSignalsMappingCmd::execute(): arrived" << endl;
 
 	return insert((static_cast<Multiplexer *>(device))->get_signals_mapping());
 }
-
-//+----------------------------------------------------------------------------
-//
-// method : 		SelectByChannelCmd::SelectByChannelCmd()
-// 
-// description : 	constructor for the command of the Multiplexer.
-//
-// In : - name : The command name
-//		- in : The input parameter type
-//		- out : The output parameter type
-//		- in_desc : The input parameter description
-//		- out_desc : The output parameter description
-//
-//-----------------------------------------------------------------------------
-SelectByChannelCmd::SelectByChannelCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out,
-								const char		*in_desc,
-				       			const char		*out_desc,
-								Tango::DispLevel level)
-:Command(name,in,out,in_desc,out_desc, level)
-{
-}
-//
-//	Constructor without in/out parameters description
-//
-SelectByChannelCmd::SelectByChannelCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out)
-:Command(name,in,out)
-{
-}
-
-
-
-
-//+----------------------------------------------------------------------------
-//
-// method : 		SelectByChannelCmd::is_allowed()
-// 
-// description : 	method to test whether command is allowed or not in this
-//			state. In this case, the command is allowed only if
-//			the device is in ON state
-//
-// in : - device : The device on which the command must be excuted
-//		- in_any : The command input data
-//
-// returns :	boolean - true == is allowed , false == not allowed
-//
-//-----------------------------------------------------------------------------
-bool SelectByChannelCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::Any &in_any)
-{
-		//	End of Generated Code
-
-		//	Re-Start of Generated Code
-		return true;
-}
-
-
-
 
 //+----------------------------------------------------------------------------
 //
@@ -370,7 +135,7 @@ bool SelectByChannelCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::Any 
 CORBA::Any *SelectByChannelCmd::execute(Tango::DeviceImpl *device,const CORBA::Any &in_any)
 {
 
-	cout2 << "DevTemplateCmd::execute(): arrived" << endl;
+	cout2 << "SelectByChannelCmd::execute(): arrived" << endl;
 
 	Tango::DevUShort	argin;
 	extract(in_any, argin);
@@ -378,66 +143,6 @@ CORBA::Any *SelectByChannelCmd::execute(Tango::DeviceImpl *device,const CORBA::A
 	((static_cast<Multiplexer *>(device))->select_by_channel(argin));
 	return new CORBA::Any();
 }
-
-
-
-//+----------------------------------------------------------------------------
-//
-// method : 		SelectByNameCmd::SelectByNameCmd()
-// 
-// description : 	constructor for the command of the Multiplexer.
-//
-// In : - name : The command name
-//		- in : The input parameter type
-//		- out : The output parameter type
-//		- in_desc : The input parameter description
-//		- out_desc : The output parameter description
-//
-//-----------------------------------------------------------------------------
-SelectByNameCmd::SelectByNameCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out,
-								const char		*in_desc,
-				       			const char		*out_desc,
-								Tango::DispLevel level)
-:Command(name,in,out,in_desc,out_desc, level)
-{
-}
-//
-//	Constructor without in/out parameters description
-//
-SelectByNameCmd::SelectByNameCmd(	const char		*name,
-								Tango::CmdArgType in,
-				       			Tango::CmdArgType out)
-:Command(name,in,out)
-{
-}
-
-
-
-
-//+----------------------------------------------------------------------------
-//
-// method : 		SelectByNameCmd::is_allowed()
-// 
-// description : 	method to test whether command is allowed or not in this
-//			state. In this case, the command is allowed only if
-//			the device is in ON state
-//
-// in : - device : The device on which the command must be excuted
-//		- in_any : The command input data
-//
-// returns :	boolean - true == is allowed , false == not allowed
-//
-//-----------------------------------------------------------------------------
-bool SelectByNameCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::Any &in_any)
-{
-		//	End of Generated Code
-
-		//	Re-Start of Generated Code
-		return true;
-}
-
 
 
 
@@ -457,7 +162,7 @@ bool SelectByNameCmd::is_allowed(Tango::DeviceImpl *device, const CORBA::Any &in
 CORBA::Any *SelectByNameCmd::execute(Tango::DeviceImpl *device,const CORBA::Any &in_any)
 {
 
-	cout2 << "DevTemplateCmd::execute(): arrived" << endl;
+	cout2 << "SelectByNameCmd::execute(): arrived" << endl;
 
 	Tango::DevString	argin;
 	extract(in_any, argin);
@@ -486,6 +191,8 @@ MultiplexerClass::MultiplexerClass(string &s):DeviceClass(s)
 {
 
 	cout2 << "Entering MultiplexerClass constructor" << endl;
+	set_default_property();
+	get_class_property();
 	write_class_property();
 	
 	cout2 << "Leaving MultiplexerClass constructor" << endl;
@@ -584,6 +291,54 @@ void MultiplexerClass::command_factory()
 
 //+----------------------------------------------------------------------------
 //
+// method : 		MultiplexerClass::get_class_property
+// 
+// description : 	Get the class property for specified name.
+//
+// in :		string	name : The property name
+//
+//+----------------------------------------------------------------------------
+Tango::DbDatum MultiplexerClass::get_class_property(string &prop_name)
+{
+	for (unsigned int i=0 ; i<cl_prop.size() ; i++)
+		if (cl_prop[i].name == prop_name)
+			return cl_prop[i];
+	//	if not found, return  an empty DbDatum
+	return Tango::DbDatum(prop_name);
+}
+//+----------------------------------------------------------------------------
+//
+// method : 		MultiplexerClass::get_default_device_property()
+// 
+// description : 	Return the default value for device property.
+//
+//-----------------------------------------------------------------------------
+Tango::DbDatum MultiplexerClass::get_default_device_property(string &prop_name)
+{
+	for (unsigned int i=0 ; i<dev_def_prop.size() ; i++)
+		if (dev_def_prop[i].name == prop_name)
+			return dev_def_prop[i];
+	//	if not found, return  an empty DbDatum
+	return Tango::DbDatum(prop_name);
+}
+
+//+----------------------------------------------------------------------------
+//
+// method : 		MultiplexerClass::get_default_class_property()
+// 
+// description : 	Return the default value for class property.
+//
+//-----------------------------------------------------------------------------
+Tango::DbDatum MultiplexerClass::get_default_class_property(string &prop_name)
+{
+	for (unsigned int i=0 ; i<cl_def_prop.size() ; i++)
+		if (cl_def_prop[i].name == prop_name)
+			return cl_def_prop[i];
+	//	if not found, return  an empty DbDatum
+	return Tango::DbDatum(prop_name);
+}
+//+----------------------------------------------------------------------------
+//
 // method : 		MultiplexerClass::device_factory
 // 
 // description : 	Create the device object(s) and store them in the 
@@ -594,23 +349,129 @@ void MultiplexerClass::command_factory()
 //-----------------------------------------------------------------------------
 void MultiplexerClass::device_factory(const Tango::DevVarStringArray *devlist_ptr)
 {
-	
-	for (long i=0 ; i < devlist_ptr->length() ; i++)
+
+	//	Create all devices.(Automatic code generation)
+	//-------------------------------------------------------------
+	for (unsigned long i=0 ; i < devlist_ptr->length() ; i++)
 	{
 		cout4 << "Device name : " << (*devlist_ptr)[i].in() << endl;
 						
-		// Create device and add it into the device list
+		// Create devices and add it into the device list
 		//----------------------------------------------------
 		device_list.push_back(new Multiplexer(this, (*devlist_ptr)[i]));							 
 
 		// Export device to the outside world
-		// Check before id database used.
+		// Check before if database used.
 		//---------------------------------------------
-		if (Tango::Util::_UseDb == true)
+		if ((Tango::Util::_UseDb == true) && (Tango::Util::_FileDb == false))
 			export_device(device_list.back());
 		else
 			export_device(device_list.back(), (*devlist_ptr)[i]);
 	}
+	//	End of Automatic code generation
+	//-------------------------------------------------------------
+
+}
+
+//+----------------------------------------------------------------------------
+//
+// method : 		MultiplexerClass::get_class_property()
+// 
+// description : 	Read the class properties from database.
+//
+//-----------------------------------------------------------------------------
+void MultiplexerClass::get_class_property()
+{
+	//	Initialize your default values here (if not done with  POGO).
+	//------------------------------------------------------------------
+
+	//	Read class properties from database.(Automatic code generation)
+	//------------------------------------------------------------------
+
+	//	Call database and extract values
+	//--------------------------------------------
+	if (Tango::Util::instance()->_UseDb==true)
+		get_db_class()->get_property(cl_prop);
+	Tango::DbDatum	def_prop;
+	int	i = -1;
+
+
+	//	End of Automatic code generation
+	//------------------------------------------------------------------
+
+}
+
+//+----------------------------------------------------------------------------
+//
+// method : 	MultiplexerClass::set_default_property
+// 
+// description: Set default property (class and device) for wizard.
+//              For each property, add to wizard property name and description
+//              If default value has been set, add it to wizard property and
+//              store it in a DbDatum.
+//
+//-----------------------------------------------------------------------------
+void MultiplexerClass::set_default_property()
+{
+	string	prop_name;
+	string	prop_desc;
+	string	prop_def;
+
+	vector<string>	vect_data;
+	//	Set Default Class Properties
+	//	Set Default Device Properties
+	prop_name = "Signals";
+	prop_desc = "Name of signals attached to mux. inputs.\nSyntax <channel-id>:<signal_name>. For instance: 0:camera_1";
+	prop_def  = "";
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+
+	prop_name = "NiDAQmxDeviceName";
+	prop_desc = "The name of NI-DAQmx device [use NI-MAX device name]";
+	prop_def  = "";
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+
+	prop_name = "Topology";
+	prop_desc = "The multiplexer topology: \"8x1\", \"16x1\", \"4x1 terminated\", \"8x1 terminated\"";
+	prop_def  = "";
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+
+	prop_name = "MuxId";
+	prop_desc = "In case Topology is set to \"8x1\" or \"4x1 terminated\", this property indentifies the 8x1 multiplexer managed by this device.\nShould be 0 [channels[0..7]->com0] or 1 [channels[8..15]->com1].";
+	prop_def  = "";
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+
 }
 //+----------------------------------------------------------------------------
 //
@@ -626,68 +487,82 @@ void MultiplexerClass::write_class_property()
 	if (Tango::Util::_UseDb == false)
 		return;
 
-	//	Prepeare DbDatum
-	//--------------------------------------------
+	Tango::DbData	data;
+	string	classname = get_name();
+	string	header;
+	string::size_type	start, end;
+
+	//	Put title
 	Tango::DbDatum	title("ProjectTitle");
 	string	str_title("NI-Switch Support");
 	title << str_title;
+	data.push_back(title);
 
+	//	Put Description
 	Tango::DbDatum	description("Description");
-	string	str_desc("Provides support for the NI-2593 [dual 8x1 or single 16x1 multiplexer]");
+	vector<string>	str_desc;
+	str_desc.push_back("Provides support for the NI-2593 [dual 8x1 or single 16x1 multiplexer]");
 	description << str_desc;
-	
-		// Use the doc_url field to store all information 
-		// on the server version and CVS 
-		string::size_type pos, len; 
+	data.push_back(description);
 		
-		// 1) Manage module name  
-		//  get rid of the $RCSfile:  prefix and of Class.cpp suffix 
-		string classname = RCSfile;
-		
-		pos = classname.find("$RCSfile: ");
-		len = classname.length();
-		
-		if (pos != string::npos) 
-			classname= classname.substr(pos+10, len- pos-10); 
+	//	put cvs location
+	string	rcsId(RcsId);
+	string	filename(classname);
+	start = rcsId.find("/");
+	if (start!=string::npos)
+	{
+		filename += "Class.cpp";
+		end   = rcsId.find(filename);
+		if (end>start)
+		{
+			string	strloc = rcsId.substr(start, end-start);
+			//	Check if specific repository
+			start = strloc.find("/cvsroot/");
+			if (start!=string::npos && start>0)
+			{
+				string	repository = strloc.substr(0, start);
+				if (repository.find("/segfs/")!=string::npos)
+					strloc = "ESRF:" + strloc.substr(start, strloc.length()-start);
+			}
+			Tango::DbDatum	cvs_loc("cvs_location");
+			cvs_loc << strloc;
+			data.push_back(cvs_loc);
+		}
+	}
 
-		pos = classname.find ("Class.cpp",0);
-		if (pos != string::npos) 
-			classname=classname.substr(0,pos);
-		
-		// 2)  Manage version number with SOLEIL CVS rules 
-		// tag name is in the form : release_1_0 ==> transform it to 1.0
-		// 
-		string version ; 
-		string str_TagName=string(TagName); 
-		
-		pos = str_TagName.find_first_of("_",0); 
-		if (pos != string::npos) 
-			version= str_TagName.substr(pos+1, 3);
+	//	Get CVS tag revision
+	string	tagname(TagName);
+	header = "$Name: ";
+	start = header.length();
+	string	endstr(" $");
+	end   = tagname.find(endstr);
+	if (end!=string::npos && end>start)
+	{
+		string	strtag = tagname.substr(start, end-start);
+		Tango::DbDatum	cvs_tag("cvs_tag");
+		cvs_tag << strtag;
+		data.push_back(cvs_tag);
+	}
 
-		pos = version.find_first_of("_",0); 
-		if (pos != string::npos) 
-			version[pos] = '.';
+	//	Get URL location
+	string	httpServ(HttpServer);
+	if (httpServ.length()>0)
+	{
+		Tango::DbDatum	db_doc_url("doc_url");
+		db_doc_url << httpServ;
+		data.push_back(db_doc_url);
+	}
 
-		
-	//  Store all info in the str_url property		
-		
-		string	str_url=  "Documentation URL = " + string(HttpServer) + classname +"-" + version + "/index.html" + "\n";
-		str_url= str_url + " Version CVS Tag = " + string(TagName)+ "\n"; 
-		str_url= str_url + " CVS location = " + string(FileName)+ "\n"; 
-		
-		Tango::DbDatum	doc_url("doc_url");
-		
-		doc_url << str_url;
+	//  Put inheritance
+	Tango::DbDatum	inher_datum("InheritedFrom");
+	vector<string> inheritance;
+	inheritance.push_back("Device_3Impl");
+	inher_datum << inheritance;
+	data.push_back(inher_datum);
 
-		// Push everything in DataBase
-
-		Tango::DbData	data;
-		data.push_back(title);
-		data.push_back(description);
-		data.push_back(doc_url);
-		//	Call database and and values
-		//--------------------------------------------
-		get_db_class()->put_property(data);
+	//	Call database and and values
+	//--------------------------------------------
+	get_db_class()->put_property(data);
 }
 
 }	// namespace

@@ -11,8 +11,13 @@
 # $Revision$
 #
 # $Log$
-# Revision 1.1  2007/08/31 14:15:24  rsune
-# Initial revision
+# Revision 1.2  2007/09/03 11:01:51  rsune
+# Added support for terminated modes
+# Added a mutex to the static members
+# TODO: Now only one multiplexer (with up to two tango devices) can be used with one server
+#
+# Revision 1.1.1.1  2007/08/31 14:15:24  rsune
+# Minor changes over original Soleil device
 #
 # Revision 1.1.1.1  2004/11/08 14:14:19  root
 # initial import
@@ -29,6 +34,9 @@
 #         (c) - Software Engineering Group - ESRF
 #=============================================================================
 #
+
+CLASS =	Multiplexer
+RELEASE    = Release_$(MAJOR_VERS)_$(MINOR_VERS)
 
 ifdef _solaris
 CC = CC
@@ -75,12 +83,13 @@ endif
 
 
 
-CLASS =	Multiplexer
+
 
 SVC_OBJS = 	main.o	\
 		ClassFactory.o	\
 		$(CLASS)Class.o	\
 		NiSwitchSupport.o \
+		$(CLASS)StateMachine.o \
 		$(CLASS).o
 
 SVC_INC = 	$(CLASS)Class.h \
@@ -100,3 +109,14 @@ clean:
 	
 install:
 	cp $(CLASS) $(TANGO_HOME)/bin/$(BIN_DIR)
+
+#----------------------------------------------------
+#	Tag the CVS module corresponding to this class
+#----------------------------------------------------
+tag:
+	@cvstag "$(CLASS)-$(RELEASE)"
+	@make   $(CLASS)
+	@make show_tag
+
+show_tag:
+	@cvstag -d 

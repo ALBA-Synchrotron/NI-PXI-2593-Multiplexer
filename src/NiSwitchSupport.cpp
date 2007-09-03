@@ -8,6 +8,7 @@
 //
 // = AUTHORS
 //    N.Leclercq
+//    R.Sune
 //
 // ============================================================================
 
@@ -36,6 +37,9 @@
 // STATICs
 // ============================================================================
 bool Mux::mux_available[2] = {true, true};
+// std::map<std::string, bool[2]> Mux::mux_available_map;
+omni_mutex Mux::mux_available_mutex;
+
 // ----------------------------------------------------------------------------
 const char * Mux::mux_channels[16] = 
 {
@@ -56,6 +60,47 @@ const char * Mux::mux_channels[16] =
   "ch14", 
   "ch15"
 };
+
+
+
+
+	
+inline unsigned short TopologyInfo::get_real_channel_id(unsigned short vch) const
+{		
+	unsigned short chan_id = this->chan_min + this->chan_offset*vch;
+	return chan_id;
+}
+
+inline unsigned short TopologyInfo::get_virtual_channel_id(unsigned short rch) const
+{		
+	unsigned short ch = rch - this->chan_min;
+	return (ch / this->chan_offset);
+}
+
+inline bool TopologyInfo::check_real_channel_id(unsigned short chan_id) const
+{
+	return !(chan_id < this->chan_min || chan_id > this->chan_max);
+}
+
+inline unsigned short TopologyInfo::begin() const
+{
+	return this->chan_min;
+}
+
+inline unsigned short TopologyInfo::end() const
+{
+	return this->chan_max + 1;
+}
+
+inline void TopologyInfo::next(unsigned short & val) const
+{
+	val += this->chan_offset;
+	if (val > this->chan_max)
+		val = this->end();
+}
+
+
+
 
 // ============================================================================
 // Mux::Mux
@@ -94,13 +139,22 @@ void Mux::initialize (const std::string& _n, MuxTopology _t, MuxId _i)
 void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
     throw (Tango::DevFailed)
 {
+  omni_mutex_lock lock(mux_available_mutex);
+
+//   if (!mux_available_map.count(_n)) {
+// 	  bool aux[2] = {true, true};
+// 	  mux_available_map[_n] = aux;
+//   }
+//   bool aux[2] & = mux_available_map[_n];
+  
   //- check topology
   switch (_t) 
   {
     case mux_topology_dual_8x1:
+	case mux_topology_dual_4x1_terminated:
       if (Mux::mux_available[kMUX_0] == false && Mux::mux_available[kMUX_1] == false) {
         Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
-                                       _CCP("can't create 8x1 mux. [hardware already reserved]"),
+                                       _CCP("can't create mux. [hardware already reserved]"),
                                        _CCP("Mux::initialize"));
       }
       switch (_i) 
@@ -109,7 +163,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
           if (Mux::mux_available[kMUX_0] == false) 
           {
             Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
-                                           _CCP("can't create 8x1 mux. [hardware already reserved]"),
+                                           _CCP("can't create mux. [hardware already reserved]"),
                                            _CCP("Mux::initialize"));
           }
           break;
@@ -117,7 +171,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
           if (Mux::mux_available[kMUX_1] == false) 
           {
             Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
-                                           _CCP("can't create 8x1 mux. [hardware already reserved]"),
+                                           _CCP("can't create mux. [hardware already reserved]"),
                                            _CCP("Mux::initialize"));
           }
           break;
@@ -130,9 +184,10 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
       }
       break;
     case mux_topology_single_16x1:
+	case mux_topology_single_8x1_terminated:
       if (Mux::mux_available[kMUX_0] == false || Mux::mux_available[kMUX_1] == false) {
         Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
-                                       _CCP("can't create 16x1-mux. [hardware already reserved]"),
+                                       _CCP("can't create mux. [hardware already reserved]"),
                                        _CCP("Mux::initialize"));
       }
       break;
@@ -184,6 +239,32 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
         }
       }
       break;
+    case mux_topology_dual_4x1_terminated:
+      {
+        if (Mux::mux_available[(this->id_ == mux_com0) ? kMUX_1 : kMUX_0] == true) 
+        {
+          DEBUG_STREAM << "Mux::initialize::init hw for dual_4x1_terminated mode" << endl;
+          err = ::DAQmxSwitchSetTopologyAndReset(this->ni_device_name_.c_str(),
+                                                 DAQmx_Val_Switch_Topology_2593_Dual_4x1_Terminated_Mux);
+        }
+        if (err == 0) 
+        {
+          Mux::mux_available[(this->id_ == mux_com0) ? kMUX_0 : kMUX_1] = false;
+        }
+      }
+      break;
+    case mux_topology_single_8x1_terminated:
+      {
+        DEBUG_STREAM << "Mux::initialize::init hw for single_8x1_terminated mode" << endl;
+        err = ::DAQmxSwitchSetTopologyAndReset(this->ni_device_name_.c_str(),
+											   DAQmx_Val_Switch_Topology_2593_8x1_Terminated_Mux);
+        if (err == 0) 
+        {
+          Mux::mux_available[kMUX_0] = false;
+          Mux::mux_available[kMUX_1] = false;
+        }
+      }
+      break;
     default:
       break;
   }
@@ -208,6 +289,9 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
 				                             _CCP("Mux::initialize"));
     }
   }
+  
+  // Everything is set, now infere the extra info about the topology
+  this->define_topology_info();
 
   //- init done
   this->initialized_ = true;
@@ -219,12 +303,16 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
 void Mux::release (void)
     throw (Tango::DevFailed)
 {
+  omni_mutex_lock lock(mux_available_mutex);
+
   switch (this->topology_)
   {
     case mux_topology_dual_8x1:
+    case mux_topology_dual_4x1_terminated:
           Mux::mux_available[(this->id_ == mux_com0) ? kMUX_0 : kMUX_1] = true;
       break;
     case mux_topology_single_16x1:
+    case mux_topology_single_8x1_terminated:
           Mux::mux_available[kMUX_0] = true;
           Mux::mux_available[kMUX_1] = true;
       break;
@@ -239,6 +327,64 @@ void Mux::release (void)
   this->signals_.clear();
 }
 
+
+
+
+void Mux::define_topology_info()
+{
+  switch (this->topology_)
+  {
+    case mux_topology_dual_4x1_terminated:
+      switch (this->id_)
+      {
+        case mux_com0:
+          this->topology_info_.chan_min = 0;
+		  this->topology_info_.chan_max = 6;
+		  this->topology_info_.chan_offset = 2;
+		  this->topology_info_.comName = kCOMMON0_STR;
+          break;
+        case mux_com1:
+          this->topology_info_.chan_min = 8;
+		  this->topology_info_.chan_max = 14;
+		  this->topology_info_.chan_offset = 2;
+		  this->topology_info_.comName = kCOMMON1_STR;
+          break;
+      }
+      break;
+    case mux_topology_dual_8x1:
+      switch (this->id_)
+      {
+        case mux_com0:
+          this->topology_info_.chan_min = 0;
+		  this->topology_info_.chan_max = 7;
+		  this->topology_info_.chan_offset = 1;
+		  this->topology_info_.comName = kCOMMON0_STR;
+          break;
+        case mux_com1:
+          this->topology_info_.chan_min = 8;
+		  this->topology_info_.chan_max = 15;
+		  this->topology_info_.chan_offset = 1;
+		  this->topology_info_.comName = kCOMMON1_STR;
+          break;
+      }
+      break;
+    case mux_topology_single_8x1_terminated:
+      this->topology_info_.chan_min = 0;
+	  this->topology_info_.chan_max = 14;
+	  this->topology_info_.chan_offset = 2;
+	  this->topology_info_.comName = kCOMMON0_STR;
+      break;
+    case mux_topology_single_16x1:
+      this->topology_info_.chan_min = 0;
+	  this->topology_info_.chan_max = 15;
+	  this->topology_info_.chan_offset = 1;
+	  this->topology_info_.comName = kCOMMON0_STR;
+      break;
+    default:
+      break;
+  }
+}
+
 // ============================================================================
 // Mux::set_signals
 // ============================================================================
@@ -250,36 +396,6 @@ void Mux::set_signals (const std::vector<std::string>& _signal_names)
       Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
 				                             _CCP("multiplexer is not properly initialized"),
 				                             _CCP("Mux::set_signals"));
-  }
-
-  unsigned short offset;
-  unsigned short chan_min;
-  unsigned short chan_max;
-
-  switch (this->topology_)
-  {
-    case mux_topology_dual_8x1:
-      switch (this->id_)
-      {
-        case mux_com0:
-          chan_min = 0;
-          chan_max = 7;
-          offset = 0;
-          break;
-        case mux_com1:
-          chan_min = 8;
-          chan_max = 15;
-          offset = 8;
-          break;
-      }
-      break;
-    case mux_topology_single_16x1:
-      chan_min = 0;
-      chan_max = 15;
-      offset = 0;
-      break;
-    default:
-      break;
   }
 
   std::pair<SignalsIterator, bool> result;
@@ -314,14 +430,17 @@ void Mux::set_signals (const std::vector<std::string>& _signal_names)
 				                               _CCP("signal name syntax error [should be <chan-id>:<signal-name>]"),
 				                               _CCP("Mux::set_signals"));
       }
-      chan_id += offset;
-      if (chan_id < chan_min || chan_id > chan_max)
+	  
+	  
+	  chan_id = this->topology_info_.get_real_channel_id(chan_id);
+	  if(!this->topology_info_.check_real_channel_id(chan_id))
       {
         this->signals_.clear();
         Tango::Except::throw_exception(_CCP("DATA_OUT_OF_RANGE"),
 				                               _CCP("invalid channel identifier [valid range is [0..7]"),
 				                               _CCP("Mux::set_signals"));
       }
+
       std::string signal;
       signal.assign(_signal_names[i].begin() + pos + 1, _signal_names[i].end());
       if (signal.size() == 0)
@@ -357,47 +476,16 @@ void Mux::select (unsigned short _channel, bool use_logical_chan_id)
 				                             _CCP("Mux::select"));
   }
 
-  unsigned short offset;
-  unsigned short chan_min;
-  unsigned short chan_max;
-
-
-  switch (this->topology_)
-  {
-    case mux_topology_dual_8x1:
-      switch (this->id_)
-      {
-        case mux_com0:
-          offset = 0;
-          chan_min = 0;
-          chan_max = 7;
-          break;
-        case mux_com1:
-          offset = 8;
-          chan_min = 8;
-          chan_max = 15;
-          break;
-      }
-      break;
-    case mux_topology_single_16x1:
-      offset = 0;
-      chan_min = 0;
-      chan_max = 15;
-      break;
-    default:
-      break;
-  }
-
   if (use_logical_chan_id)
   {
-    _channel += offset; 
+	  _channel = this->topology_info_.get_real_channel_id(_channel);
   }
-
-  if (_channel < chan_min || _channel > chan_max)
+  
+  if(!this->topology_info_.check_real_channel_id(_channel))
   {
-        Tango::Except::throw_exception(_CCP("DATA_OUT_OF_RANGE"),
-				                               _CCP("invalid channel identifier for specified topology"),
-				                               _CCP("Mux::select"));
+	  Tango::Except::throw_exception(_CCP("DATA_OUT_OF_RANGE"),
+									 _CCP("invalid channel identifier for specified topology"),
+									 _CCP("Mux::select"));
   }
 
   //- disconnect any existing connection
@@ -415,23 +503,7 @@ void Mux::select (unsigned short _channel, bool use_logical_chan_id)
                      + this->ni_device_name_ 
                      + k_separator;
 
-  switch (this->topology_)
-  {
-    case mux_topology_dual_8x1:
-      switch (this->id_) 
-      {
-        case mux_com0:
-          output += kCOMMON0_STR;
-          break;
-        case mux_com1:
-          output += kCOMMON1_STR;
-          break;
-      }
-      break;
-    case mux_topology_single_16x1:
-      output += kCOMMON0_STR;
-      break;
-  }
+  output += this->topology_info_.comName;
 
   DEBUG_STREAM << "Mux::select::connecting " << input << " to " << output << endl;
 
@@ -506,24 +578,8 @@ void Mux::reset (void)
   std::string output = k_separator 
                      + this->ni_device_name_ 
                      + k_separator;
-
-  switch (this->topology_)
-  {
-    case mux_topology_dual_8x1:
-      switch (this->id_) 
-      {
-        case mux_com0:
-          output += kCOMMON0_STR;
-          break;
-        case mux_com1:
-          output += kCOMMON1_STR;
-          break;
-      }
-      break;
-    case mux_topology_single_16x1:
-      output += kCOMMON0_STR;
-      break;
-  }
+  
+  output += this->topology_info_.comName;
 
   DEBUG_STREAM << "Mux::reset::disconnecting " << input << " to " << output << endl;
 
@@ -569,27 +625,6 @@ Tango::DevVarLongStringArray * Mux::get_signals_list (void) throw (Tango::DevFai
 			                             _CCP("Mux::get_signals_list"));
   }
 
-  unsigned short offset;
-  switch (this->topology_)
-  {
-    case mux_topology_dual_8x1:
-      switch (this->id_)
-      {
-        case mux_com0:
-          offset = 0;
-          break;
-        case mux_com1:
-          offset = 8;
-          break;
-      }
-      break;
-    case mux_topology_single_16x1:
-      offset = 0;
-      break;
-    default:
-      break;
-  }
-
   dvlsa->lvalue.length(this->signals_.size());
   dvlsa->svalue.length(this->signals_.size());
 
@@ -598,7 +633,8 @@ Tango::DevVarLongStringArray * Mux::get_signals_list (void) throw (Tango::DevFai
 
   for (unsigned long i = 0; cur != end; cur++, i++) 
   {
-    dvlsa->lvalue[i] = (long)cur->second - offset;
+//    dvlsa->lvalue[i] = (long)cur->second - offset;
+	dvlsa->lvalue[i] = (long)this->topology_info_.get_virtual_channel_id(cur->second);
     dvlsa->svalue[i] = CORBA::string_dup(cur->first.c_str());
   } 
 
@@ -610,40 +646,6 @@ Tango::DevVarLongStringArray * Mux::get_signals_list (void) throw (Tango::DevFai
 // ============================================================================
 short Mux::get_selection (bool use_logical_chan_id)
 {
-  std::string com;
-  unsigned short chan_min = 0;
-  unsigned short chan_max = 0;
-  unsigned short offset;
-
-  switch (this->topology_)
-  {
-    case mux_topology_dual_8x1:
-      switch (this->id_)
-      {
-        case mux_com0:
-          chan_min = 0;
-          chan_max = 7;
-          com = kCOMMON0_STR;
-          offset = 0;
-          break;
-        case mux_com1:
-          chan_min = 8;
-          chan_max = 15;
-          com = kCOMMON1_STR;
-          offset = 8;
-          break;
-      }
-      break;
-    case mux_topology_single_16x1:
-      chan_min = 0;
-      chan_max = 15;
-      com = kCOMMON0_STR;
-      offset = 0;
-      break;
-    default:
-      break;
-  }
-
   long err;
   char path[256];
   long path_status;
@@ -653,16 +655,17 @@ short Mux::get_selection (bool use_logical_chan_id)
   std::string output = k_separator 
                      + this->ni_device_name_ 
                      + k_separator
-                     + com;
+                     + this->topology_info_.comName;
 
-  for (unsigned short i = chan_min; i <= chan_max; i++)
+//  for (unsigned short i = chan_min; i <= chan_max; i++)
+  for (unsigned short i = this->topology_info_.begin();
+	   i != this->topology_info_.end(); this->topology_info_.next(i))
   {
     //- build input and output string
     std::string input = k_separator 
                       + this->ni_device_name_ 
                       + k_separator 
                       + Mux::mux_channels[i];
-
     err = ::DAQmxSwitchFindPath(input.c_str(), output.c_str(), path, path_len, &path_status);
     if (err) 
     {
@@ -685,7 +688,7 @@ short Mux::get_selection (bool use_logical_chan_id)
     if (path_status == DAQmx_Val_PathStatus_AlreadyExists)
     {
       DEBUG_STREAM << "Mux::get_selection::path: DAQmx_Val_PathStatus_AlreadyExists" << endl;
-      return (use_logical_chan_id) ? i - offset : i;
+	  return (use_logical_chan_id) ? this->topology_info_.get_virtual_channel_id(i) : i;
     }
   }
 
@@ -724,30 +727,9 @@ const std::string& Mux::get_selection_by_name (void)
     }
   } 
 
-  unsigned short offset;
-
-  switch (this->topology_)
-  {
-    case mux_topology_dual_8x1:
-      switch (this->id_)
-      {
-        case mux_com0:
-          offset = 0;
-          break;
-        case mux_com1:
-          offset = 8;
-          break;
-      }
-      break;
-    case mux_topology_single_16x1:
-      offset = 0;
-      break;
-    default:
-      break;
-  }
-
   TangoSys_OMemStream o;
-  o << "anonymous signal from channel " << selection - offset << std::ends;
+  o << "anonymous signal from channel " << this->topology_info_.get_virtual_channel_id(selection) << std::ends;
+  
 
   anonymous = o.str();
 
