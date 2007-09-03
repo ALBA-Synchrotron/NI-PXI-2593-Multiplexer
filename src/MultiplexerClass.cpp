@@ -23,6 +23,9 @@ static const char *RCSfile = "$RCSfile$";
 // $Revision$
 //
 // $Log$
+// Revision 1.3  2007/09/03 12:20:39  rsune
+// Now it should be OK with multiple devices on a server too
+//
 // Revision 1.2  2007/09/03 11:01:51  rsune
 // Added support for terminated modes
 // Added a mutex to the static members
@@ -373,6 +376,7 @@ void MultiplexerClass::device_factory(const Tango::DevVarStringArray *devlist_pt
 
 }
 
+
 //+----------------------------------------------------------------------------
 //
 // method : 		MultiplexerClass::get_class_property()
@@ -460,7 +464,7 @@ void MultiplexerClass::set_default_property()
 		add_wiz_dev_prop(prop_name, prop_desc);
 
 	prop_name = "MuxId";
-	prop_desc = "In case Topology is set to \"8x1\" or \"4x1 terminated\", this property indentifies the 8x1 multiplexer managed by this device.\nShould be 0 [channels[0..7]->com0] or 1 [channels[8..15]->com1].";
+	prop_desc = "In case Topology is set to 8x1, this property indentifies the 8x1 multiplexer managed by this device.\nShould be 0 [channels[0..7]->com0] or 1 [channels[8..15]->com1].";
 	prop_def  = "";
 	if (prop_def.length()>0)
 	{
@@ -502,6 +506,55 @@ void MultiplexerClass::write_class_property()
 	Tango::DbDatum	description("Description");
 	vector<string>	str_desc;
 	str_desc.push_back("Provides support for the NI-2593 [dual 8x1 or single 16x1 multiplexer]");
+	str_desc.push_back("Important:");
+	str_desc.push_back("TOPOLOGY PORT MAPPINGS:");
+	str_desc.push_back("");
+	str_desc.push_back("Real is the channel on device documentation");
+	str_desc.push_back("Virtual is the channel that the tango device expects");
+	str_desc.push_back("");
+	str_desc.push_back("FORMAT: \" Real : Virtual \"");
+	str_desc.push_back("");
+	str_desc.push_back("Topology = \"16x1\":");
+	str_desc.push_back("  0  :  0");
+	str_desc.push_back("  1  :  1");
+	str_desc.push_back("  ...");
+	str_desc.push_back("  15 :  15");
+	str_desc.push_back("");
+	str_desc.push_back("-------------------");
+	str_desc.push_back("");
+	str_desc.push_back("Topology = \"8x1\":");
+	str_desc.push_back("  MuxId = 0");
+	str_desc.push_back("    0  :  0");
+	str_desc.push_back("    1  :  1");
+	str_desc.push_back("    ...");
+	str_desc.push_back("    7  :  7");
+	str_desc.push_back("  MuxId = 1");
+	str_desc.push_back("    8  :  0");
+	str_desc.push_back("    9  :  1");
+	str_desc.push_back("    ...");
+	str_desc.push_back("    15 :  7");
+	str_desc.push_back("");
+	str_desc.push_back("--------------------");
+	str_desc.push_back("");
+	str_desc.push_back("Topology = \"8x1 terminated\":");
+	str_desc.push_back("  0  :  0");
+	str_desc.push_back("  2  :  1");
+	str_desc.push_back("  ...");
+	str_desc.push_back("  14 :  7");
+	str_desc.push_back("");
+	str_desc.push_back("-------------------");
+	str_desc.push_back("");
+	str_desc.push_back("Topology = \"4x1 terminated\":");
+	str_desc.push_back("  MuxId = 0");
+	str_desc.push_back("    0  :  0");
+	str_desc.push_back("    2  :  1");
+	str_desc.push_back("    4  :  2");
+	str_desc.push_back("    6  :  3");
+	str_desc.push_back("  MuxId =1");
+	str_desc.push_back("    8  :  4");
+	str_desc.push_back("    10 :  5");
+	str_desc.push_back("    12 :  6");
+	str_desc.push_back("    14 :  7");
 	description << str_desc;
 	data.push_back(description);
 		

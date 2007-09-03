@@ -36,9 +36,8 @@
 // ============================================================================
 // STATICs
 // ============================================================================
-bool Mux::mux_available[2] = {true, true};
-// std::map<std::string, bool[2]> Mux::mux_available_map;
-omni_mutex Mux::mux_available_mutex;
+std::map<std::string, std::set<int> > Mux::muxUsed;
+omni_mutex Mux::muxUsedMutex;
 
 // ----------------------------------------------------------------------------
 const char * Mux::mux_channels[16] = 
@@ -139,20 +138,16 @@ void Mux::initialize (const std::string& _n, MuxTopology _t, MuxId _i)
 void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
     throw (Tango::DevFailed)
 {
-  omni_mutex_lock lock(mux_available_mutex);
-
-//   if (!mux_available_map.count(_n)) {
-// 	  bool aux[2] = {true, true};
-// 	  mux_available_map[_n] = aux;
-//   }
-//   bool aux[2] & = mux_available_map[_n];
+  omni_mutex_lock lock(Mux::muxUsedMutex);
+  
+  std::set<int> & used = Mux::muxUsed[_n];
   
   //- check topology
   switch (_t) 
   {
     case mux_topology_dual_8x1:
 	case mux_topology_dual_4x1_terminated:
-      if (Mux::mux_available[kMUX_0] == false && Mux::mux_available[kMUX_1] == false) {
+      if ( used.count(kMUX_0) && used.count(kMUX_1) ) {
         Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
                                        _CCP("can't create mux. [hardware already reserved]"),
                                        _CCP("Mux::initialize"));
@@ -160,7 +155,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
       switch (_i) 
       {
         case mux_com0:
-          if (Mux::mux_available[kMUX_0] == false) 
+          if (used.count(kMUX_0)) 
           {
             Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
                                            _CCP("can't create mux. [hardware already reserved]"),
@@ -168,7 +163,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
           }
           break;
         case mux_com1:
-          if (Mux::mux_available[kMUX_1] == false) 
+          if (used.count(kMUX_1)) 
           {
             Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
                                            _CCP("can't create mux. [hardware already reserved]"),
@@ -185,7 +180,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
       break;
     case mux_topology_single_16x1:
 	case mux_topology_single_8x1_terminated:
-      if (Mux::mux_available[kMUX_0] == false || Mux::mux_available[kMUX_1] == false) {
+      if (used.count(kMUX_0) || used.count(kMUX_1)) {
         Tango::Except::throw_exception(_CCP("CONFIGURATION_ERROR"),
                                        _CCP("can't create mux. [hardware already reserved]"),
                                        _CCP("Mux::initialize"));
@@ -215,7 +210,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
   {
     case mux_topology_dual_8x1:
       {
-        if (Mux::mux_available[(this->id_ == mux_com0) ? kMUX_1 : kMUX_0] == true) 
+        if (!used.count((this->id_ == mux_com0) ? kMUX_1 : kMUX_0)) 
         {
           DEBUG_STREAM << "Mux::initialize::init hw for dual_8x1 mode" << endl;
           err = ::DAQmxSwitchSetTopologyAndReset(this->ni_device_name_.c_str(),
@@ -223,7 +218,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
         }
         if (err == 0) 
         {
-          Mux::mux_available[(this->id_ == mux_com0) ? kMUX_0 : kMUX_1] = false;
+          used.insert((this->id_ == mux_com0) ? kMUX_0 : kMUX_1);
         }
       }
       break;
@@ -234,14 +229,14 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
                                                DAQmx_Val_Switch_Topology_2593_16x1_Mux);
         if (err == 0) 
         {
-          Mux::mux_available[kMUX_0] = false;
-          Mux::mux_available[kMUX_1] = false;
+          used.insert(kMUX_0);
+          used.insert(kMUX_1);
         }
       }
       break;
     case mux_topology_dual_4x1_terminated:
       {
-        if (Mux::mux_available[(this->id_ == mux_com0) ? kMUX_1 : kMUX_0] == true) 
+        if (!used.count((this->id_ == mux_com0) ? kMUX_1 : kMUX_0)) 
         {
           DEBUG_STREAM << "Mux::initialize::init hw for dual_4x1_terminated mode" << endl;
           err = ::DAQmxSwitchSetTopologyAndReset(this->ni_device_name_.c_str(),
@@ -249,7 +244,7 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
         }
         if (err == 0) 
         {
-          Mux::mux_available[(this->id_ == mux_com0) ? kMUX_0 : kMUX_1] = false;
+          used.insert((this->id_ == mux_com0) ? kMUX_0 : kMUX_1);
         }
       }
       break;
@@ -260,8 +255,8 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
 											   DAQmx_Val_Switch_Topology_2593_8x1_Terminated_Mux);
         if (err == 0) 
         {
-          Mux::mux_available[kMUX_0] = false;
-          Mux::mux_available[kMUX_1] = false;
+          used.insert(kMUX_0);
+          used.insert(kMUX_1);
         }
       }
       break;
@@ -303,22 +298,28 @@ void Mux::initialize (const char * _n, MuxTopology _t, MuxId _i)
 void Mux::release (void)
     throw (Tango::DevFailed)
 {
-  omni_mutex_lock lock(mux_available_mutex);
+  omni_mutex_lock lock(Mux::muxUsedMutex);
+  std::set<int> & used = Mux::muxUsed[this->ni_device_name_];
 
   switch (this->topology_)
   {
     case mux_topology_dual_8x1:
     case mux_topology_dual_4x1_terminated:
-          Mux::mux_available[(this->id_ == mux_com0) ? kMUX_0 : kMUX_1] = true;
+		  used.erase((this->id_ == mux_com0) ? kMUX_0 : kMUX_1);
       break;
     case mux_topology_single_16x1:
     case mux_topology_single_8x1_terminated:
-          Mux::mux_available[kMUX_0] = true;
-          Mux::mux_available[kMUX_1] = true;
+		  used.erase(kMUX_0);
+		  used.erase(kMUX_1);
       break;
     default:
       break;
   }
+  
+  // If this device is used by no more tango devices, erase
+  // the list...
+  if(!used.size())
+	  Mux::muxUsed.erase(this->ni_device_name_);
 
   this->initialized_ = false;
   this->topology_ = mux_topology_unknown; 

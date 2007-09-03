@@ -11,6 +11,9 @@
 // $Revision$
 //
 // $Log$
+// Revision 1.3  2007/09/03 12:20:39  rsune
+// Now it should be OK with multiple devices on a server too
+//
 // Revision 1.2  2007/09/03 11:01:51  rsune
 // Added support for terminated modes
 // Added a mutex to the static members
@@ -58,6 +61,56 @@ namespace Multiplexer_ns
 /**
  * Class Description:
  * Provides support for the NI-2593 [dual 8x1 or single 16x1 multiplexer]
+ *	
+ *	<h3>TOPOLOGY PORT MAPPINGS:</h3>
+ *	
+ *	<p>Real is the channel on device documentation.</p>
+ *	<p>Virtual is the channel that the tango device expects.</p>
+ *  <p>
+ *	FORMAT: " Real : Virtual "
+ *	<ul>
+ *	<li><b>Topology = "16x1":</b><ul>
+ *	  <li>0  :  0</li>
+ *	  <li>1  :  1</li>
+ *	  <li>...</li>
+ *	  <li>15 :  15</li></ul></li>
+ *	
+ *	
+ *	<li><b>Topology = "8x1":</b><ul>
+ *	  <li><i>MuxId = 0</i><ul>
+ *	    <li>0  :  0</li>
+ *	    <li>1  :  1</li>
+ *	    <li>...</li>
+ *	    <li>7  :  7</li></ul></li>
+ *	  <li><i>MuxId = 1</i><ul>
+ *	    <li>8  :  0</li>
+ *	    <li>9  :  1</li>
+ *	    <li>...</li>
+ *	    <li>15 :  7</li></ul></li>
+ *    </ul></li>
+ *	
+ *	
+ *	<li><b>Topology = "8x1 terminated":</b><ul>
+ *	  <li>0  :  0</li>
+ *	  <li>2  :  1</li>
+ *	  <li>...</li>
+ *	  <li>14 :  7</li></ul></li>
+ *	
+ *	
+ *	<li><b>Topology = "4x1 terminated":</b><ul>
+ *	  <li><i>MuxId = 0</i><ul>
+ *	    <li>0  :  0</li>
+ *	    <li>2  :  1</li>
+ *	    <li>4  :  2</li>
+ *	    <li>6  :  3</li></ul></li>
+ *	  <li><i>MuxId = 1</i><ul>
+ *	    <li>8  :  4</li>
+ *	    <li>10 :  5</li>
+ *	    <li>12 :  6</li>
+ *	    <li>14 :  7</li></ul></li>
+ *   </ul></li>
+ *	</ul>
+ *	</p>
  */
 
 /*

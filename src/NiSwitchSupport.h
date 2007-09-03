@@ -21,6 +21,8 @@
 #include <NIDAQmx.h>
 #include <tango.h>
 #include <omnithread.h>
+#include <set>
+#include <string>
 
 //=============================================================================
 // TYPEDEFs
@@ -188,9 +190,12 @@ public:
 
 private:
   //- mux topology 
- static bool mux_available[2];
-//   static std::map<std::string, bool[2]> mux_available_map;
-  static omni_mutex mux_available_mutex;
+  // the string is used to identify the real device name,
+  // as we can have multiple devices running on the same server.
+  // The set contains the mux used in this device (can be either
+  // the first one, the second or both)
+  static std::map<std::string, std::set<int> > muxUsed;
+  static omni_mutex muxUsedMutex;
 
   //- mux channels
   static const char * mux_channels[16];

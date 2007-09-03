@@ -15,6 +15,9 @@
 // $Revision$
 //
 // $Log$
+// Revision 1.3  2007/09/03 12:20:39  rsune
+// Now it should be OK with multiple devices on a server too
+//
 // Revision 1.2  2007/09/03 11:01:51  rsune
 // Added support for terminated modes
 // Added a mutex to the static members
@@ -73,7 +76,7 @@ public:
 	
 	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
 	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
-	{return true; (static_cast<Multiplexer *>(dev));/*->is_GetSelectionByChannel_allowed(any);*/}
+	{return (static_cast<Multiplexer *>(dev))->is_GetSelectionByChannel_allowed(any);}
 };
 
 
