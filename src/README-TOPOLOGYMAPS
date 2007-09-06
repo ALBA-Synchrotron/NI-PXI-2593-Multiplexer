@@ -1,0 +1,50 @@
+
+TOPOLOGY PORT MAPPINGS:
+
+Real is the channel on device documentation
+Virtual is the channel that the tango device expects
+
+FORMAT: " Real : Virtual "
+
+Topology = "16x1":
+  0  :  0
+  1  :  1
+  ...
+  15 :  15
+
+-------------------
+
+Topology = "8x1":
+  MuxId = 0
+    0  :  0
+    1  :  1
+    ...
+    7  :  7
+  MuxId = 1
+    8  :  0
+    9  :  1
+    ...
+    15 :  7
+
+--------------------
+
+Topology = "8x1 terminated":
+  0  :  0
+  2  :  1
+  ...
+  14 :  7
+
+-------------------
+
+Topology = "4x1 terminated":
+  MuxId = 0
+    0  :  0
+    2  :  1
+    4  :  2
+    6  :  3
+  MuxId =1
+    8  :  4
+    10 :  5
+    12 :  6
+    14 :  7
+
