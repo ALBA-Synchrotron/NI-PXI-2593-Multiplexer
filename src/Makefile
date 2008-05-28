@@ -51,10 +51,10 @@ endif
 
 #NI_HOME      =  /usr/local
 NI_HOME      =  /home/developer/usrlocal/natinst/nidaqmx/
-TANGO_HOME   =  /homelocal/sicilia/tango
-OMNI_HOME    =  /homelocal/sicilia/omniorb/
+TANGO_HOME   =  $(SICILIA)
+OMNI_HOME    =  $(SICILIA)
 INCLUDE_DIRS =  -I$(TANGO_HOME)/include	-I. -I$(OMNI_HOME)/include -I$(NI_HOME)/include
-LIB_DIRS     =  -L $(TANGO_HOME)/lib -L $(OMNI_HOME)/lib -L $(NI_HOME)/lib
+LIB_DIRS     =  -L $(TANGO_HOME)/lib -L $(OMNI_HOME)/lib -L $(NI_HOME)/lib -L $(SICILIA)/lib/cpp
 
 ifdef _solaris
 CXXFLAGS =  -mt -D_PTHREADS $(INCLUDE_DIRS)
@@ -64,6 +64,7 @@ LFLAGS =  -g $(LIB_DIRS)  		\
 				-lomniORB4 		\
 				-lomniDynamic4	\
 				-lomnithread	\
+				-lCOS4 \
 				-lpthread		\
 				-lposix4 -lsocket -lnsl
 endif
@@ -76,6 +77,7 @@ LFLAGS =  -g $(LIB_DIRS)  		\
 				-lomniORB4 		\
 				-lomniDynamic4	\
 				-lomnithread	\
+				-lCOS4 \
 				-ldl -lpthread \
 				-lnidaqmx
 endif
@@ -99,10 +101,10 @@ SVC_INC = 	$(CLASS)Class.h \
 %.o: %.cpp $(SVC_INC)
 	$(CC) $(CXXFLAGS) -c $<
 			
-all: $(CLASS)
+all: MultiplexerNI
 
-$(CLASS):	$(SVC_OBJS)
-	$(CC) $(SVC_OBJS) -o $(CLASS) $(LFLAGS)
+MultiplexerNI:	$(SVC_OBJS)
+	$(CC) $(SVC_OBJS) -o MultiplexerNI $(LFLAGS)
 
 clean:
 	rm -f *.o $(CLASS) core *~
