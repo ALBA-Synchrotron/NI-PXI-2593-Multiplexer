@@ -50,7 +50,7 @@ BIN_DIR = suse72
 endif
 
 #NI_HOME      =  /usr/local
-NI_HOME      =  /home/developer/usrlocal/natinst/nidaqmx/
+NI_HOME      =  $(SICILIA)
 TANGO_HOME   =  $(SICILIA)
 OMNI_HOME    =  $(SICILIA)
 INCLUDE_DIRS =  -I$(TANGO_HOME)/include	-I. -I$(OMNI_HOME)/include -I$(NI_HOME)/include
