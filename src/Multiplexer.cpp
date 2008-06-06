@@ -69,7 +69,6 @@ static const char *RcsId = "$Header$";
 #define k16x1_TOPOLOGY_STR (const char*)"16x1"
 #define k04x1_terminated_TOPOLOGY_STR (const char*)"4x1 terminated"
 #define k08x1_terminated_TOPOLOGY_STR (const char*)"8x1 terminated"
-#define kMAGIC_CHANNEL     0xFFFF
 
 // ============================================================================
 // MACROs
@@ -336,13 +335,13 @@ void Multiplexer::get_device_property()
 
   critical_properties_missing_ = false;
 
-  if (!this->niDAQmxDeviceName.size()) //data[1].is_empty()
+  if (!this->niDAQmxDeviceName.size())
   {
     ERROR_STREAM << "Required device property <NiDAQmxDeviceName> is missing" << std::endl;
     critical_properties_missing_ = true;
   }
 
-  if (!this->topology.size()) //data[2].is_empty()
+  if (!this->topology.size())
   {
     ERROR_STREAM << "Required device property <Topology> is missing" << std::endl;
     critical_properties_missing_ = true;
@@ -356,7 +355,7 @@ void Multiplexer::get_device_property()
                << niDAQmxDeviceName
                << endl;
 
-  if (this->niDAQmxDeviceName.size() || signals.size() == 0) // data[1].is_empty() == false
+  if (this->niDAQmxDeviceName.size() || signals.size() == 0)
   {
     for (unsigned long i = 0; i < signals.size(); i++)
     {
@@ -380,30 +379,6 @@ void Multiplexer::get_device_property()
                << topology 
                << std::endl;
 
-//   //- be sure Topology is valid
-//   std::string tmp = topology;
-//   std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-//   if (tmp != k08x1_TOPOLOGY_STR && tmp != k16x1_TOPOLOGY_STR)
-//   {
-//     ERROR_STREAM << "Device property <Topology> is invalid [should be \"8x1\", \"16x1\", \"4x1 terminated\" or \"8x1 terminated\"]" << std::endl;
-//     critical_properties_missing_ = true;
-//   }
-// 
-//   //- be sure MuxId is specified and valid
-//   if (tmp == k08x1_TOPOLOGY_STR || tmp == k04x1_terminated_TOPOLOGY_STR)
-//   {
-// // 	if (data[3].is_empty()) 
-// //     {
-// //       ERROR_STREAM << "Required device property <MuxId> is missing" << endl;
-// //       critical_properties_missing_ = true;
-// //     }
-// //     else
-// 	if (muxId != 0 && muxId != 1)
-//     {
-//       ERROR_STREAM << "Device property <MuxId> is invalid [should be 0 or 1]" << std::endl;
-//       critical_properties_missing_ = true;
-//     }
-//   }
   if (muxId != 0 && muxId != 1)
   {
 	  ERROR_STREAM << "Device property <MuxId> is invalid [should be 0 or 1]" << std::endl;
@@ -462,11 +437,11 @@ void Multiplexer::select_by_name(Tango::DevString argin)
  *	description:	method to execute "SelectByChannel"
  *	Connect the specified channel to the mux. output
  *
- * @param	argin	The channel to select
+ * @param	argin	The channel to select. Use a negative value to disconnect.
  *
  */
 //+------------------------------------------------------------------
-void Multiplexer::select_by_channel(Tango::DevUShort argin)
+void Multiplexer::select_by_channel(Tango::DevShort argin)
 {
 	DEBUG_STREAM << "Multiplexer::select_by_channel(): entering... !" << endl;
 
@@ -479,10 +454,10 @@ void Multiplexer::select_by_channel(Tango::DevUShort argin)
 				                           _CCP("Mux::select_by_channel"));
   }
 
-  if (argin == static_cast<Tango::DevUShort>(kMAGIC_CHANNEL))
+  if (argin < 0)
     this->mux_->reset();
   else
-    this->mux_->select(argin, true);
+    this->mux_->select(static_cast<Tango::DevUShort>(argin), true);
 }
 
 //+------------------------------------------------------------------

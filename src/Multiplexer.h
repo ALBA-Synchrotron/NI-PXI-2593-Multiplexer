@@ -248,10 +248,10 @@ public :
 	void	select_by_name(Tango::DevString);
 /**
  * Connect the specified channel to the mux. output
- *	@param	argin	The channel to select
+ *	@param	argin	The channel to select. Use a negative value to disconnect.
  *	@exception DevFailed
  */
-	void	select_by_channel(Tango::DevUShort);
+	void	select_by_channel(Tango::DevShort);
 /**
  * The long array contains channel ids while the string array contains signal names
  *	@return	The signals mapping

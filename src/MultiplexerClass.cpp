@@ -140,7 +140,7 @@ CORBA::Any *SelectByChannelCmd::execute(Tango::DeviceImpl *device,const CORBA::A
 
 	cout2 << "SelectByChannelCmd::execute(): arrived" << endl;
 
-	Tango::DevUShort	argin;
+	Tango::DevShort	argin;
 	extract(in_any, argin);
 
 	((static_cast<Multiplexer *>(device))->select_by_channel(argin));
@@ -266,8 +266,8 @@ void MultiplexerClass::command_factory()
 		"N/A",
 		Tango::OPERATOR));
 	command_list.push_back(new SelectByChannelCmd("SelectByChannel",
-		Tango::DEV_USHORT, Tango::DEV_VOID,
-		"The channel to select",
+		Tango::DEV_SHORT, Tango::DEV_VOID,
+		"The channel to select. Use a negative value to disconnect",
 		"N/A",
 		Tango::OPERATOR));
 	command_list.push_back(new GetSignalsMappingCmd("GetSignalsMapping",
