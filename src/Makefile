@@ -38,15 +38,22 @@
 CLASS =	Multiplexer
 RELEASE    = Release_$(MAJOR_VERS)_$(MINOR_VERS)
 
+ifdef no_debug
+	DEBUG = -O2
+else
+	DEBUG = -g -DDEBUG_ADLINK_DEVICE
+endif
+
+
 ifdef _solaris
-CC = CC
+CC = CC $(DEBUG)
 BIN_DIR = solaris7_CC
 endif
 
 ifdef linux
-CC = c++
+CC = c++ $(DEBUG)
 AR = ar
-BIN_DIR = suse72
+BIN_DIR = suse102
 endif
 
 #NI_HOME      =  /usr/local
@@ -58,7 +65,7 @@ LIB_DIRS     =  -L $(TANGO_HOME)/lib -L $(OMNI_HOME)/lib -L $(NI_HOME)/lib -L $(
 
 ifdef _solaris
 CXXFLAGS =  -mt -D_PTHREADS $(INCLUDE_DIRS)
-LFLAGS =  -g $(LIB_DIRS)  		\
+LFLAGS =  $(LIB_DIRS)  		\
 				-ltango			\
 				-llog4tango		\
 				-lomniORB4 		\
@@ -70,8 +77,8 @@ LFLAGS =  -g $(LIB_DIRS)  		\
 endif
 
 ifdef linux
-CXXFLAGS =  -g -D_REENTRANT $(INCLUDE_DIRS)
-LFLAGS =  -g $(LIB_DIRS)  		\
+CXXFLAGS =  -D_REENTRANT $(INCLUDE_DIRS)
+LFLAGS =  $(LIB_DIRS)  		\
 				-ltango			\
 				-llog4tango		\
 				-lomniORB4 		\
